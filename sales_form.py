@@ -2,7 +2,6 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 import sys, sqlite3, os
-from sqlite3 import Error
 
 class DatabaseAccess():
     def __init__(self):
@@ -26,7 +25,7 @@ class DatabaseAccess():
             conn = sqlite3.connect(db_path)
             #print(sqlite3.version)
             return conn
-        except Error as e:
+        except sqlite3.Error as e:
             #print(e)
             sys.exit()
 
@@ -353,7 +352,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Sales Form Window"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Sales Form App"))
         self.sales_label.setText(_translate("MainWindow", "Sales Form"))
         self.first_name_label.setText(_translate("MainWindow", "Customer First Name:"))
         self.last_Name_label.setText(_translate("MainWindow", "Customer Last Name:"))
@@ -776,13 +775,22 @@ class Ui_No_Res_Dialog(object):
         dba.Dialog.close()
 
 if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
+    try:
+        app = QtWidgets.QApplication(sys.argv)
+        MainWindow = QtWidgets.QMainWindow()
+        ui = Ui_MainWindow()
+        ui.setupUi(MainWindow)
 
-    dba = DatabaseAccess()
+        dba = DatabaseAccess()
 
-    MainWindow.show()
-    
+        MainWindow.show()
+        
+    except Exception as e:
+        print(str(e))
+        with open("log.txt", 'w') as log_file:
+            log_file.write(str(e))
+        error_dialog = QtWidgets.QErrorMessage()
+        error_dialog.showMessage("Program failed... Send log.txt file to ewingnjole@gmail.com")
+        error_dialog.show()
+        
     sys.exit(app.exec_())
