@@ -1,0 +1,4 @@
+pyinstaller -n "Sales Form" --add-data "sales_form.db:." -i "ui_files/icons8-sales-tri-48.icns" --clean -y -w -F --noupx sales_form.py
+
+
+pyinstaller -n "Sales Form" --add-data "sales_form.db;." -i "ui_files/icons8-sales-tri-48-w10.ico" --clean -y -w -F --noupx sales_form.py
