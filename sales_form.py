@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-import sys, sqlite3
+import sys, sqlite3, os
 from sqlite3 import Error
 
 class DatabaseAccess():
@@ -10,18 +10,24 @@ class DatabaseAccess():
         self.sql_cursor = self.sql_conn.cursor()
         self.sql_cursor.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='sales'")
         if self.sql_cursor.fetchone()[0] == 1:
-            print("Sales table exists.")
+            #print("Sales table exists.")
+            pass
         else:
             self.sql_cursor.execute("CREATE TABLE sales (last_name, first_name, company, style, color, size, order_num, order_date, delivery_date, po_num, address, state, city, postal_code, phone_num, email, notes)")
 
     def createConnection(self, db_file):
+        if getattr(sys, 'frozen', False):
+            application_path = os.path.dirname(sys.executable)
+        elif __file__:
+            application_path = os.path.dirname(__file__)
+        db_path = os.path.join(application_path, db_file)
         conn = None
         try:
-            conn = sqlite3.connect(db_file)
-            print(sqlite3.version)
+            conn = sqlite3.connect(db_path)
+            #print(sqlite3.version)
             return conn
         except Error as e:
-            print(e)
+            #print(e)
             sys.exit()
 
     def add_current_data(self, data):
@@ -37,8 +43,11 @@ class DatabaseAccess():
         if len(self.search_results) > 0:
             ui.display_search(self.search_results[0])
         else:
-            # ADD POPUP FAILURE
-            print("No search results for that order number")
+            self.Dialog = QtWidgets.QDialog()
+            self.no_res_dialog = Ui_No_Res_Dialog()
+            self.no_res_dialog.setupUi(self.Dialog)
+            self.Dialog.show()
+            #print("No search results for that order number")
 
     def modify_current_data(self, data):
         order_num = data[6]
@@ -464,7 +473,7 @@ class Ui_MainWindow(object):
         dba.remove_current_data(data)
         self.clear_ui_fields()
         self.modify_counter = 0
-        print("ui.delete_entry > " + str(self.modify_counter))
+        #print("ui.delete_entry > " + str(self.modify_counter))
         self.modify_button.setEnabled(False)
         self.delete_button.setEnabled(False)
 
@@ -491,10 +500,10 @@ class Ui_MainWindow(object):
 
         if self.modify_counter % 2 == 0:
             dba.add_current_data(self.data)
-            print("Added with value 0")
+            #print("Added with value 0")
         elif self.modify_counter % 2 != 0:
             dba.modify_current_data(self.data)
-            print("Modified with value 1")
+            #print("Modified with value 1")
 
     def search_db(self):
         self.Dialog = QtWidgets.QDialog()
@@ -527,7 +536,7 @@ class Ui_MainWindow(object):
         self.clear_button.setEnabled(0)
         self.delete_button.setEnabled(0)
         self.modify_counter = 0
-        print("ui.display_search > " + str(self.modify_counter))
+        #print("ui.display_search > " + str(self.modify_counter))
 
     def set_field_enabled(self, type):
         self.last_name_field.setEnabled(type)
@@ -550,7 +559,7 @@ class Ui_MainWindow(object):
 
     def modify_action(self):
         self.modify_counter += 1
-        print("ui.modify_action > " + str(self.modify_counter))
+        #print("ui.modify_action > " + str(self.modify_counter))
         if self.modify_counter % 2 == 0:
             self.set_field_enabled(0)
             self.save_button.setEnabled(0)
@@ -639,7 +648,7 @@ class Confirm_Dialog(object):
 
     def accept(self):
         self.clear_ui_fields()
-        print("Confrim_Dialog.accept > " + str(ui.modify_counter))
+        #print("Confrim_Dialog.accept > " + str(ui.modify_counter))
         self.closeDialog()
 
     def clear_ui_fields(self):
@@ -684,7 +693,7 @@ class Confirm_Mod_Dialog(object):
         self.clear_ui_fields()
 #        ui.modify_button.setEnabled(0)
 #        ui.delete_button.setEnabled(0)
-        print("Confrim_Mod_Dialog.accept > " + str(ui.modify_counter))
+        #print("Confrim_Mod_Dialog.accept > " + str(ui.modify_counter))
         self.closeDialog()
 
     def clear_ui_fields(self):
@@ -731,6 +740,40 @@ class Confirm_Del_Dialog(object):
 
     def closeDialog(self):
         ui.Dialog.close()
+
+class Ui_No_Res_Dialog(object):
+    def setupUi(self, Dialog):
+        Dialog.setObjectName(u"Dialog")
+        Dialog.resize(362, 98)
+        Dialog.setMinimumSize(QtCore.QSize(362, 98))
+        Dialog.setMaximumSize(QtCore.QSize(362, 98))
+        Dialog.setWindowModality(QtCore.Qt.ApplicationModal)
+        self.label = QtWidgets.QLabel(Dialog)
+        self.label.setObjectName(u"label")
+        self.label.setGeometry(QtCore.QRect(20, 10, 321, 31))
+        font = QtGui.QFont()
+        font.setPointSize(17)
+        self.label.setFont(font)
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
+        self.pushButton = QtWidgets.QPushButton(Dialog)
+        self.pushButton.setObjectName(u"pushButton")
+        self.pushButton.setGeometry(QtCore.QRect(250, 60, 81, 26))
+
+        self.retranslateUi(Dialog)
+
+        self.pushButton.clicked.connect(self.accept)
+
+        QtCore.QMetaObject.connectSlotsByName(Dialog)
+    # setupUi
+
+    def retranslateUi(self, Dialog):
+        Dialog.setWindowTitle(QtCore.QCoreApplication.translate("Dialog", u"No Search Result", None))
+        self.label.setText(QtCore.QCoreApplication.translate("Dialog", u"No results found for that order number.", None))
+        self.pushButton.setText(QtCore.QCoreApplication.translate("Dialog", u"Ok", None))
+    # retranslateUi
+
+    def accept(self):
+        dba.Dialog.close()
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
