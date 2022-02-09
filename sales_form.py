@@ -280,6 +280,10 @@ class Ui_MainWindow(object):
         self.line_3.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.line_3.setObjectName("line_3")
 
+        self.toolButton = QtWidgets.QToolButton(self.centralwidget)
+        self.toolButton.setObjectName(u"toolButton")
+        self.toolButton.setGeometry(QtCore.QRect(870, 40, 51, 21))
+
         self.save_button = QtWidgets.QPushButton(self.centralwidget)
         self.save_button.setGeometry(QtCore.QRect(780, 540, 131, 51))
         self.save_button.setObjectName("save_button")
@@ -312,6 +316,7 @@ class Ui_MainWindow(object):
             self.state_combobox, self.city_field, self.postal_code_field, 
             self.phone_num_field, self.email_field, self.notes_field]
 
+        self.toolButton.clicked.connect(self.revertUi)
         self.clear_button.clicked.connect(self.clearFields)
         self.save_button.clicked.connect(self.saveCurrentFields)
         self.search_button.clicked.connect(self.searchDatabase)
@@ -353,11 +358,19 @@ class Ui_MainWindow(object):
         self.email_label.setText(_translate("MainWindow", "Customer Email:"))
         self.notes_label.setText(_translate("MainWindow", "Notes:"))
 
+        self.toolButton.setText(_translate("MainWindow", "Revert"))
         self.save_button.setText(_translate("MainWindow", "Save"))
         self.clear_button.setText(_translate("MainWindow", "Clear"))
         self.search_button.setText(_translate("MainWindow", "Search"))
         self.modify_button.setText(_translate("MainWindow", "Modify"))
         self.delete_button.setText(_translate("MainWindow", "Delete"))
+
+    def revertUi(self):
+        self.enableFields(1)
+        self.modify_button.setDisabled(1)
+        self.delete_button.setDisabled(1)
+        self.clear_button.setEnabled(1)
+        self.clearDataFields()
 
     def clearFields(self):
         self.Dialog = QtWidgets.QDialog()
@@ -372,7 +385,7 @@ class Ui_MainWindow(object):
 
     def clearDataFields(self):
         for item in self.field_list:
-            if item is not QtWidgets.QComboBox():
+            if "QComboBox" not in str(type(item)):
                 item.clear()
             else:
                 item.setCurrentText("")
