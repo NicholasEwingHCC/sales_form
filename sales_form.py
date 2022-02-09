@@ -412,9 +412,9 @@ class Ui_MainWindow(object):
             self.state_combobox.currentText(),
             self.city_field.text(),
             self.postal_code_field.text(),
-            self.notes_field.toPlainText(),
             self.phone_num_field.text(),
-            self.email_field.text()
+            self.email_field.text(),
+            self.notes_field.toPlainText()
             ]
 
         if self.modify_counter % 2 == 0:
