@@ -371,6 +371,7 @@ class Ui_MainWindow(object):
         self.delete_button.setDisabled(1)
         self.clear_button.setEnabled(1)
         self.save_button.setEnabled(1)
+        self.modify_counter = 0
         self.clearDataFields()
 
     def clearFields(self):
