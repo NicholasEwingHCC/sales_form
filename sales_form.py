@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
+# Python Version: 3.8.6
+# Sales Form Version: 2.3.1
 
+# Imports PyQt5, sys, and platform for GUI, sqlite3 for SQL database, os for file paths
 from PyQt5 import QtCore, QtGui, QtWidgets
 import sys, sqlite3, os, platform
 
+# Class containing functions for interacting with the sales_form.db file
 class DatabaseAccess():
+    # Initializes a connection to the sql database, adds a cursor for command execution, 
+    # and creates a new table if one doesn't exist
     def __init__(self):
         self.sql_conn = self.createConnection("sales_form.db")
         self.sql_cursor = self.sql_conn.cursor()
@@ -12,7 +18,9 @@ class DatabaseAccess():
         if self.sql_cursor.fetchone()[0] != 1:
             self.sql_cursor.execute("CREATE TABLE sales (last_name, first_name, company, style, color, size, order_num, order_date, delivery_date, po_num, address, state, city, postal_code, phone_num, email, notes)")
 
+    # Creates the connection with the sql database
     def createConnection(self, db_file):
+        # Generates correct paths for program when frozen
         if getattr(sys, 'frozen', False):
             application_path = os.path.dirname(sys.executable)
         elif __file__:
@@ -27,6 +35,7 @@ class DatabaseAccess():
                 sql_log.write(str(e))
             sys.exit()
 
+    # Adds a new set of data into the database
     def addCurrentData(self, data):
         for item in data:
             if item == "":
@@ -35,6 +44,8 @@ class DatabaseAccess():
         self.sql_cursor.execute(f"INSERT INTO sales VALUES ('{data[0]}', '{data[1]}', '{data[2]}', '{data[3]}', '{data[4]}', '{data[5]}', '{data[6]}', '{data[7]}', '{data[8]}', '{data[9]}', '{data[10]}', '{data[11]}', '{data[12]}', '{data[13]}', '{data[14]}', '{data[15]}', '{data[16]}')")
         self.sql_conn.commit()
 
+    # Searches by order number for a item in the database
+    # Displays either the first result in the GUI or a dialog if there are no results
     def search(self, order_num):
         self.sql_cursor.execute(f"SELECT * FROM sales WHERE order_num='{order_num}'")
         self.search_results = self.sql_cursor.fetchone()
@@ -48,6 +59,7 @@ class DatabaseAccess():
             self.no_res_dialog.setupUi(self.Dialog)
             self.Dialog.show()
 
+    # Changes a current items data in the database (using order number)
     def modifyCurrentData(self, data):
         order_num = data[6]
         for item in data:
@@ -62,11 +74,14 @@ class DatabaseAccess():
         ui.clearDataFields()
         ui.displayUpdate(order_num)
  
+    # Removes item from database using order number
     def removeCurrentData(self, order_num):
         self.sql_cursor.execute(f"DELETE FROM sales WHERE order_num='{order_num}'")
         self.sql_conn.commit()
 
+# Class for the main app GUI
 class Ui_MainWindow(object):
+    # Builds GUI and adds all necesary widgets
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(943, 615)
@@ -308,7 +323,10 @@ class Ui_MainWindow(object):
 
         MainWindow.setCentralWidget(self.centralwidget)
 
+        # Modify counter allows for the save button to switch from adding data to updating data
         self.modify_counter = 0
+
+        # Used to simplify some code with for loops rather than 17 individual limes
         self.field_list = [self.last_name_field, self.first_name_field,
             self.company_field, self.style_field, self.color_field,
             self.size_field, self.order_num_field, self.order_date_field, 
@@ -316,6 +334,7 @@ class Ui_MainWindow(object):
             self.state_combobox, self.city_field, self.postal_code_field, 
             self.phone_num_field, self.email_field, self.notes_field]
 
+        # Connects buttons to corresponding functions
         self.toolButton.clicked.connect(self.revertUi)
         self.clear_button.clicked.connect(self.clearFields)
         self.save_button.clicked.connect(self.saveCurrentFields)
@@ -326,6 +345,7 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
+    # Sets texts for all widgets in the MainWindow
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Sales Form App"))
@@ -365,6 +385,7 @@ class Ui_MainWindow(object):
         self.modify_button.setText(_translate("MainWindow", "Modify"))
         self.delete_button.setText(_translate("MainWindow", "Delete"))
 
+    # Reverts UI to original state (like restarting the program)
     def revertUi(self):
         self.enableFields(1)
         self.modify_button.setDisabled(1)
@@ -374,6 +395,7 @@ class Ui_MainWindow(object):
         self.modify_counter = 0
         self.clearDataFields()
 
+    # Uses modify counter to determine with confirmatioon dialog is to be displayed
     def clearFields(self):
         self.Dialog = QtWidgets.QDialog()
         if self.modify_counter % 2 == 0:
@@ -385,6 +407,7 @@ class Ui_MainWindow(object):
             self.clmod_confirm_dialog.setupUi(self.Dialog)
             self.Dialog.show()
 
+    # Clears all text from GUI fields
     def clearDataFields(self):
         for item in self.field_list:
             if "QComboBox" not in str(type(item)):
@@ -392,12 +415,14 @@ class Ui_MainWindow(object):
             else:
                 item.setCurrentText("")
 
+    # Launches confirm dialog for item deletion
     def confirmDel(self):
         self.Dialog = QtWidgets.QDialog()
         self.del_confirm_dialog = Ui_DelConfirmDialog()
         self.del_confirm_dialog.setupUi(self.Dialog)
         self.Dialog.show()
 
+    # Calls for item deletion from the database and displays update afterwards
     def deleteEntry(self):
         order_num = self.order_num_field.text()
         dba.removeCurrentData(self.order_num_field.text())
@@ -411,6 +436,7 @@ class Ui_MainWindow(object):
         self.updated_dialog.setupUi(self.Dialog, order_num)
         self.Dialog.show()
 
+    # Creates list of current data and calls to either save or update the database
     def saveCurrentFields(self):
         self.data = [
             self.last_name_field.text(),
@@ -437,12 +463,14 @@ class Ui_MainWindow(object):
         else:
             dba.modifyCurrentData(self.data)
 
+    # Creates search dialog 
     def searchDatabase(self):
         self.Dialog = QtWidgets.QDialog()
         self.search_dialog = Ui_SearchDialog()
         self.search_dialog.setupUi(self.Dialog)
         self.Dialog.show()
 
+    # Displays results of search in MainWindow
     def displaySearchRes(self, search_results):
         for item in self.field_list:
             if type(item) is not type(QtWidgets.QComboBox()):
@@ -450,6 +478,7 @@ class Ui_MainWindow(object):
             else:
                 item.setCurrentText(search_results[self.field_list.index(item)])
 
+        # Disables modifcation of data and unlocks modify button
         self.enableFields(0)
         self.modify_button.setEnabled(1)
         self.save_button.setEnabled(0)
@@ -457,10 +486,12 @@ class Ui_MainWindow(object):
         self.delete_button.setEnabled(0)
         self.modify_counter = 0
 
+    # Enables or disables GUI fields
     def enableFields(self, id):
         for item in self.field_list:
             item.setEnabled(id)
 
+    # Iterates modify counter and changes GUI accordingly
     def modifyAction(self):
         self.modify_counter += 1
         if self.modify_counter % 2 == 0:
@@ -470,17 +501,21 @@ class Ui_MainWindow(object):
             self.delete_button.setEnabled(0)
         else:
             self.enableFields(1)
+            self.order_num_field.setDisabled(1)
             self.save_button.setEnabled(1)
             self.clear_button.setEnabled(1)
             self.delete_button.setEnabled(1)
 
+    # Calls for dialog displaying that a database update/deletion has occured
     def displayUpdate(self, order_num):
         self.Dialog = QtWidgets.QDialog()
         self.updated_dialog = Ui_UpdateDialog()
         self.updated_dialog.setupUi(self.Dialog, order_num)
         self.Dialog.show()
 
+# Dialog prompting user for order number to search
 class Ui_SearchDialog(object):
+    # Builds GUI and adds all necesary widgets
     def setupUi(self, Dialog):
         Dialog.setObjectName(u"Dialog")
         Dialog.resize(320, 90)
@@ -507,23 +542,29 @@ class Ui_SearchDialog(object):
 
         self.retranslateUi(Dialog)
 
+        # Connects buttonBox buttons to functions
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
 
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
+    # Sets texts for all widgets in the Dialog
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(QtCore.QCoreApplication.translate("Dialog", u"Search", None))
         self.label.setText(QtCore.QCoreApplication.translate("Dialog", u"Order #:", None))
 
+    # Calls for a database search using entered order number
     def accept(self):
         dba.search(self.lineEdit.text())
         ui.Dialog.close()
 
+    # Closes Dialog
     def reject(self):
         ui.Dialog.close()
 
+# Dialog promting user for confirmation on clearing the GUI fields
 class Ui_ClConfirmDialog(object):
+    # Builds GUI and adds all necesary widgets
     def setupUi(self, Dialog):
         Dialog.setObjectName(u"Dialog")
         Dialog.resize(271, 127)
@@ -547,23 +588,29 @@ class Ui_ClConfirmDialog(object):
 
         self.retranslateUi(Dialog)
 
+        # Connects buttonBox buttons to functions
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
 
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
+    # Sets texts for all widgets in the Dialog
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(QtCore.QCoreApplication.translate("Dialog", u"Clear Confirmation", None))
         self.label.setText(QtCore.QCoreApplication.translate("Dialog", u"This will clear all data fields. Are you sure?", None))
 
+    # Calls to clear all fields in the GUI
     def accept(self):
         ui.clearDataFields()
         ui.Dialog.close()
 
+    # Closes Dialog
     def reject(self):
         ui.Dialog.close()
 
+# Dialog promting user for confirmation on clearing the GUI fields while in modify mode
 class Ui_ModConfirmDialog(object):
+    # Builds GUI and adds all necesary widgets
     def setupUi(self, Dialog):
         Dialog.setObjectName(u"Dialog")
         Dialog.resize(271, 127)
@@ -579,7 +626,7 @@ class Ui_ModConfirmDialog(object):
 
         self.label = QtWidgets.QLabel(Dialog)
         self.label.setObjectName(u"label")
-        self.label.setGeometry(QtCore.QRect(20, 20, 231, 51))
+        self.label.setGeometry(QtCore.QRect(20, 10, 231, 71))
         font = QtGui.QFont()
         font.setPointSize(18 - font_adjust)
         self.label.setFont(font)
@@ -587,23 +634,30 @@ class Ui_ModConfirmDialog(object):
 
         self.retranslateUi(Dialog)
 
+        # Connects buttonBox buttons to functions
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
 
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
+    # Sets texts for all widgets in the Dialog
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(QtCore.QCoreApplication.translate("Dialog", u"Clear Search Confirmation", None))
-        self.label.setText(QtCore.QCoreApplication.translate("Dialog", u"This will clear all data fields. Are you sure?", None))
+        self.label.setText(QtCore.QCoreApplication.translate("Dialog", u"This will clear all data fields while you remain in modify mode. Are you sure?", None))
 
+    # Calls to clear all fields in the GUI
     def accept(self):
         ui.clearDataFields()
+        ui.order_num_field.setEnabled(1)
         ui.Dialog.close()
 
+    # Closes Dialog
     def reject(self):
         ui.Dialog.close()
 
+# Dialog promting user to comfirm deletion of database item
 class Ui_DelConfirmDialog(object):
+    # Builds GUI and adds all necesary widgets
     def setupUi(self, Dialog):
         Dialog.setObjectName(u"Dialog")
         Dialog.resize(271, 127)
@@ -627,23 +681,28 @@ class Ui_DelConfirmDialog(object):
 
         self.retranslateUi(Dialog)
 
+        # Connects buttonBox buttons to functions
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
 
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
+    # Sets texts for all widgets in the Dialog
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(QtCore.QCoreApplication.translate("Dialog", u"Delete Confirmation", None))
         self.label.setText(QtCore.QCoreApplication.translate("Dialog", u"This will remove this entry from the db. Are you sure?", None))
 
+    # Calls to delete current item from database
     def accept(self):
         ui.deleteEntry()
         ui.Dialog.close()
 
+    # Closes Dialog
     def reject(self):
         ui.Dialog.close()
 
 class Ui_NoResDialog(object):
+    # Builds GUI and adds all necesary widgets
     def setupUi(self, Dialog):
         Dialog.setObjectName(u"Dialog")
         Dialog.resize(362, 98)
@@ -667,18 +726,22 @@ class Ui_NoResDialog(object):
 
         self.retranslateUi(Dialog)
 
+        # Connects buttonBox buttons to functions
         self.buttonBox.accepted.connect(self.accept)
 
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
+    # Sets texts for all widgets in the Dialog
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(QtCore.QCoreApplication.translate("Dialog", u"No Search Result", None))
         self.label.setText(QtCore.QCoreApplication.translate("Dialog", u"No results found for that order number.", None))
 
+    # Closes Dialog
     def accept(self):
         dba.Dialog.close()
 
 class Ui_UpdateDialog(object):
+    # Builds GUI and adds all necesary widgets
     def setupUi(self, Dialog, order_num):
         Dialog.setObjectName(u"Dialog")
         Dialog.resize(362, 98)
@@ -702,23 +765,28 @@ class Ui_UpdateDialog(object):
 
         self.retranslateUi(Dialog, order_num)
 
+        # Connects buttonBox buttons to functions
         self.buttonBox.accepted.connect(self.accept)
 
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
+    # Sets texts for all widgets in the Dialog
     def retranslateUi(self, Dialog, order_num):
         Dialog.setWindowTitle(QtCore.QCoreApplication.translate("Dialog", u"Updated Database", None))
         self.label.setText(QtCore.QCoreApplication.translate("Dialog", f"The data for order number {order_num}\n was updated.", None))
 
+    # Closes Dialog
     def accept(self):
         ui.Dialog.close()
 
 if __name__ == "__main__":
+    # If on windows adjust font to fit in GUI window
     if "Windows" in platform.platform():
         font_adjust = 5
     else:
         font_adjust = 0
 
+    # Create amd show main app
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle("Fusion")
     MainWindow = QtWidgets.QMainWindow()
@@ -729,4 +797,5 @@ if __name__ == "__main__":
 
     MainWindow.show()
 
+    # Close program on app exit
     sys.exit(app.exec_())
