@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # Python Version: 3.8.6
-# Sales Form Version: 2.3.1
+# Sales Form Version: 2.3.2
 
-# Imports PyQt5, sys, and platform for GUI, sqlite3 for SQL database, os for file paths
+# Imports PyQt5, sys, and platform for GUI, sqlite3 for SQL database, and os for file paths
 from PyQt5 import QtCore, QtGui, QtWidgets
 import sys, sqlite3, os, platform
 
@@ -71,6 +71,7 @@ class DatabaseAccess():
 
         ui.modify_button.setEnabled(0)
         ui.delete_button.setEnabled(0)
+        ui.enableFields(1)
         ui.clearDataFields()
         ui.displayUpdate(order_num)
  
@@ -425,16 +426,15 @@ class Ui_MainWindow(object):
     # Calls for item deletion from the database and displays update afterwards
     def deleteEntry(self):
         order_num = self.order_num_field.text()
-        dba.removeCurrentData(self.order_num_field.text())
+        dba.removeCurrentData(order_num)
+
         self.clearDataFields()
-        self.modify_counter = 0
+        self.enableFields(1)
         self.modify_button.setDisabled(True)
         self.delete_button.setDisabled(True)
+        self.modify_counter = 0
 
-        self.Dialog = QtWidgets.QDialog()
-        self.updated_dialog = Ui_UpdateDialog()
-        self.updated_dialog.setupUi(self.Dialog, order_num)
-        self.Dialog.show()
+        return order_num
 
     # Creates list of current data and calls to either save or update the database
     def saveCurrentFields(self):
@@ -694,13 +694,15 @@ class Ui_DelConfirmDialog(object):
 
     # Calls to delete current item from database
     def accept(self):
-        ui.deleteEntry()
+        order_num = ui.deleteEntry()
         ui.Dialog.close()
+        ui.displayUpdate(order_num)
 
     # Closes Dialog
     def reject(self):
         ui.Dialog.close()
 
+# Dialog informing user no results were found from search
 class Ui_NoResDialog(object):
     # Builds GUI and adds all necesary widgets
     def setupUi(self, Dialog):
@@ -740,6 +742,7 @@ class Ui_NoResDialog(object):
     def accept(self):
         dba.Dialog.close()
 
+# Dialog informing user that data was updated in the database
 class Ui_UpdateDialog(object):
     # Builds GUI and adds all necesary widgets
     def setupUi(self, Dialog, order_num):
